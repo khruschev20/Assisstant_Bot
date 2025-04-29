@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Proposal Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #2b7dbd;
+    }
+
+    textarea, input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #2b7dbd;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-right: 10px;
+    }
+
+    .output, .history {
+      margin-top: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+
+    .proposal-item {
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Smart Proposal Generator (Entry-Level)</h2>
+
+<label for="jobDesc">Paste Job Description:</label>
+<textarea id="jobDesc" rows="6" placeholder="Paste the job description here..."></textarea>
+
+<button onclick="generateProposal()">Generate Smart Proposal</button>
+<button onclick="copyToClipboard()">Copy to Clipboard</button>
+<button onclick="downloadProposal()">Download as .txt</button>
+
+<div class="output" id="proposalOutput"></div>
+<div id="rateOutput"></div>
+
+<h3>Sent Proposals</h3>
+<div class="history" id="proposalHistory"></div>
+
+<script>
+const YOUR_NAME = "Khruschev";
+const smartIntros = {
+  "data entry": [
+    "I understand the importance of accurate and efficient data entry, and I’m excited to apply my skills to help your business succeed. Though I’m relatively new to the freelancing world, I am dedicated to ensuring your data is entered accurately and in a timely manner. I’m proficient in data entry tasks, including organizing large sets of data, formatting spreadsheets, and handling data cleanup.",
+    "As someone who is meticulous and detail-oriented, I’m confident in my ability to handle data entry tasks with precision. My focus on accuracy and speed will help ensure your project is completed efficiently. I’m excited to learn and build my freelancing career while delivering top-notch results."
+  ],
+  "virtual assistant": [
+    "I believe I can be a great asset as a virtual assistant, as I am highly organized, efficient, and detail-oriented. While I’m still building my freelancing experience, I’ve developed strong administrative skills during my training, including managing schedules, handling emails, and organizing documents. I’m eager to take on new responsibilities and support your business.",
+    "I’m motivated to provide excellent virtual assistant services, from organizing calendars to managing emails and handling customer inquiries. I’ve learned to use tools like Google Workspace and Microsoft Office, and I’m quick to adapt to any tools you may use. My goal is to relieve you of the tasks that take up your time, so you can focus on growing your business."
+  ],
+  "excel": [
+    "I am enthusiastic about working with Excel and am eager to use my growing knowledge of formulas, pivot tables, and data visualization to contribute to your project. I’ve recently completed training in Excel and have worked on personal projects to improve my skills in data analysis and reporting. I’m committed to delivering accurate and well-organized Excel sheets.",
+    "Excel is one of my strongest skills, and I’m excited to apply my ability to create efficient spreadsheets and perform data analysis for your project. Whether it’s cleaning data, creating reports, or organizing information, I am confident in my ability to help your project succeed."
+  ],
+  "software development": [
+    "I’m a recent graduate with a passion for software development, and I’m eager to apply my knowledge in a real-world project. I’ve recently completed a full-stack web development course, where I worked with HTML, CSS, JavaScript, Node.js, React, and PostgreSQL. I am enthusiastic about taking on new challenges and building scalable, efficient applications.",
+    "As an entry-level software developer, I’m excited to start my career by contributing to meaningful projects. I’ve worked on personal projects where I’ve used JavaScript, HTML5, and CSS to build responsive websites. I’m motivated to learn and grow by applying my skills in both frontend and backend development."
+  ],
+  "web development": [
+    "I’m passionate about web development and eager to contribute to your project. I’ve completed a full-stack development course and have experience building responsive websites and web applications. My skills include HTML, CSS, JavaScript, and backend technologies like Node.js and Express. I’m excited about using these skills to create a high-quality product for you.",
+    "As a beginner web developer, I’m motivated to build responsive, user-friendly websites. I’ve worked on projects using HTML5, CSS3, JavaScript, and React, and I’m eager to use these skills to contribute to your project. I’m committed to writing clean, maintainable code and ensuring the success of your website."
+  ],
+  "frontend": [
+    "I am excited about frontend development and creating beautiful, responsive websites. I have hands-on experience using HTML, CSS, JavaScript, and frameworks like Bootstrap 5. I have worked on personal projects where I created responsive UIs that perform well across different devices and screen sizes. I’m eager to contribute to your project with clean, well-structured code.",
+    "I’m passionate about crafting engaging, user-friendly interfaces with HTML, CSS, and JavaScript. I’ve worked on a few personal projects where I used Flexbox and Grid for layout, ensuring the user experience was optimized for mobile devices. I am ready to bring this enthusiasm to your project and contribute to its success."
+  ],
+  "backend": [
+    "I’m eager to apply my backend development skills to build robust applications. I’ve completed training in Node.js, Express.js, and PostgreSQL, and have built personal projects where I created server-side logic and integrated databases. I’m passionate about building scalable backend systems, and I’m eager to contribute to your project.",
+    "Though I’m still building my experience, I have a solid foundation in backend development. I’ve worked with technologies like Node.js and Express to build small-scale applications. I am committed to writing efficient, maintainable server-side code and eager to grow my backend skills through real-world projects."
+  ],
+  "fullstack": [
+    "As a full-stack developer with a growing portfolio of projects, I’m excited to offer my skills in both frontend and backend development. I have experience building full-stack applications using HTML, CSS, JavaScript, Node.js, Express, and React. I’m eager to contribute to your project by providing a seamless experience across both the user interface and server-side logic.",
+    "I’ve recently completed training as a full-stack developer and have worked on several projects that combine frontend technologies like React and Bootstrap with backend technologies such as Node.js and PostgreSQL. I’m passionate about building well-rounded, efficient web applications and am eager to apply my skills to your project."
+  ]
+};
+
+// Rate Guidelines based on job type and entry-level expertise
+const rateGuidelines = {
+  "data entry": {
+    "hourly": 8, // Entry-level hourly rate for data entry
+    "fixed": 50  // Fixed price for basic data entry tasks
+  },
+  "frontend": {
+    "hourly": 20, // Entry-level hourly rate for frontend development
+    "fixed": 150  // Fixed price for frontend projects (landing pages, small tasks)
+  },
+  "fullstack": {
+    "hourly": 30, // Entry-level hourly rate for full-stack development
+    "fixed": 300  // Fixed price for simple web applications
+  }
+};
+
+const greetings = ["Hi there,", "Hello,", "Greetings,"];
+const signOffs = ["Kind regards,", "Warm wishes,", "Sincerely,"];
+
+const keywords = Object.keys(smartIntros);
+
+function detectTypes(description) {
+  const lower = description.toLowerCase();
+  return keywords.filter(keyword => lower.includes(keyword));
+}
+
+function randomFrom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function generateProposal() {
+  const description = document.getElementById("jobDesc").value;
+  const detected = detectTypes(description);
+
+  // Prioritize the first detected job type (or choose the most relevant one)
+  const jobType = detected.length > 0 ? detected[0] : "generic"; // Default to "generic" if no match
+
+  const greeting = randomFrom(greetings);
+  const intros = smartIntros[jobType] || [];  // Only use the intros for the first detected type
+  const intro = intros.length > 0 ? randomFrom(intros) : "I’m enthusiastic about your project and confident I can contribute meaningfully.";
+
+  // Set experience based on job type
+  let exp = "";
+  let githubLink = ""; // Variable to hold the GitHub link
+  if (jobType === "data entry") {
+    exp = "Although I’m new to freelancing, I am dedicated to providing accurate and efficient data entry services.";
+  } else if (jobType === "virtual assistant") {
+    exp = "Although I’m new to freelancing, I am motivated to offer excellent virtual assistant services to support your business.";
+  } else if (jobType === "excel") {
+    exp = "Although I’m new to freelancing, I am eager to use my growing knowledge of Excel to deliver accurate and well-organized work.";
+  } else if (jobType === "frontend") {
+    exp = "I’ve worked on several frontend development projects, and I’m passionate about creating responsive and user-friendly designs.";
+    githubLink = "Check out my frontend projects on GitHub: [Frontend Projects](https://khruschev20.github.io/Freelance-Web-Developer-Site/)";
+  } else if (jobType === "backend") {
+    exp = "I have experience working with backend technologies such as Node.js, Express.js, and databases like PostgreSQL.";
+    githubLink = "Check out my backend projects on GitHub: [Backend Projects](https://khruschev20.github.io/Freelance-Web-Developer-Site/)";
+  } else if (jobType === "fullstack") {
+    exp = "I’ve developed full-stack applications using both frontend and backend technologies, ensuring smooth and efficient workflows.";
+    githubLink = "Check out my fullstack projects on GitHub: [Fullstack Projects](https://khruschev20.github.io/DevTask-Tracker/)";
+  } else {
+    exp = "Although I’m new to freelancing, I’m eager to take on new projects and provide valuable contributions.";
+  }
+
+  const close = "I’d love the opportunity to help on this project!";
+  const signOff = randomFrom(signOffs);
+
+  // Rate Calculation
+  const rate = rateGuidelines[jobType] || { hourly: 15, fixed: 100 }; // Default rate if job type not found
+  const rateInfo = `Suggested Rate: $${rate.hourly} per hour or $${rate.fixed} for a fixed project.`;
+
+  const proposal = `${greeting}
+\n${intro}
+${exp}\n\n${githubLink}\n\n${close}\n\n${signOff}\n\n${YOUR_NAME}`;
+
+  document.getElementById("proposalOutput").textContent = proposal;
+  document.getElementById("rateOutput").textContent = rateInfo;
+
+  saveProposal(proposal, jobType); // Pass the job type to saveProposal
+}
+
+
+
+
+function saveProposal(proposal) {
+  let history = JSON.parse(localStorage.getItem("proposals")) || [];
+  
+  // Prevent saving the same proposal again
+  if (!history.includes(proposal)) {
+    history.unshift(proposal); // Add to the top of the history
+    localStorage.setItem("proposals", JSON.stringify(history));
+  }
+  
+  displayHistory(); // Display the updated history
+}
+
+
+function displayHistory() {
+  const history = JSON.parse(localStorage.getItem("proposals")) || [];
+  const historyContainer = document.getElementById("proposalHistory");
+  historyContainer.innerHTML = history.map((item, index) => `
+    <div class="proposal-item">
+      <p>${item}</p>
+      <button onclick="deleteProposal(${index})">Delete</button>
+    </div>
+  `).join('');
+}
+
+function deleteProposal(index) {
+  let history = JSON.parse(localStorage.getItem("proposals")) || [];
+  history.splice(index, 1);
+  localStorage.setItem("proposals", JSON.stringify(history));
+  displayHistory();
+}
+
+function copyToClipboard() {
+  const proposal = document.getElementById("proposalOutput").textContent;
+  navigator.clipboard.writeText(proposal).then(() => {
+    alert("Proposal copied to clipboard!");
+  });
+}
+
+function downloadProposal() {
+  const proposal = document.getElementById("proposalOutput").textContent;
+  const blob = new Blob([proposal], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'proposal.txt';
+  link.click();
+}
+
+</script>
+
+</body>
+</html>
